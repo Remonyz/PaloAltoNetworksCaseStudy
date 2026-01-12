@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, Target, CreditCard, AlertCircle, Coffee, ShoppingBag, Utensils, Car, Film, Zap, CheckCircle, XCircle, Loader, TrendingUp, Shield, Calculator, Lightbulb, Save, AlertTriangle, ChevronDown, ChevronUp, MessageCircle, Send, X, Minimize2, Sparkles } from 'lucide-react';
+import { DollarSign, Target, CreditCard, AlertCircle, Lightbulb, Save, Shield, Calculator, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, MessageCircle, Send, X, Minimize2, Sparkles, Menu, Loader, Zap, CheckCircle, XCircle } from 'lucide-react';
 
 const FinancialCoach = () => {
+  // Core state management
   const [activeTab, setActiveTab] = useState('dashboard');
   const [transactions, setTransactions] = useState([]);
   const [goals, setGoals] = useState([]);
@@ -10,46 +11,47 @@ const FinancialCoach = () => {
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [apiError, setApiError] = useState('');
   
-  // New state for advanced features
+  // Advanced features state
   const [emergencyFund, setEmergencyFund] = useState(null);
   const [whatIfScenario, setWhatIfScenario] = useState(null);
   const [subOptimizations, setSubOptimizations] = useState([]);
   
-  // AI Chat state
+  // Chat state
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const chatEndRef = useRef(null);
   
-  // Load data from localStorage on mount
   useEffect(() => {
     loadFromStorage();
   }, []);
 
-  // Auto-scroll chat to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
   const loadFromStorage = () => {
     try {
-      const txData = localStorage.getItem('financial-transactions');
-      const goalsData = localStorage.getItem('financial-goals');
-      const insightsData = localStorage.getItem('financial-insights');
-      const subsData = localStorage.getItem('financial-subscriptions');
-      const efData = localStorage.getItem('emergency-fund');
-      const subOptData = localStorage.getItem('subscription-optimizations');
-      const chatData = localStorage.getItem('chat-history');
-      
-      if (txData) setTransactions(JSON.parse(txData));
-      if (goalsData) setGoals(JSON.parse(goalsData));
-      if (insightsData) setInsights(JSON.parse(insightsData));
-      if (subsData) setSubscriptions(JSON.parse(subsData));
-      if (efData) setEmergencyFund(JSON.parse(efData));
-      if (subOptData) setSubOptimizations(JSON.parse(subOptData));
-      if (chatData) setChatMessages(JSON.parse(chatData));
+      const storageKeys = {
+        'financial-transactions': setTransactions,
+        'financial-goals': setGoals,
+        'financial-insights': setInsights,
+        'financial-subscriptions': setSubscriptions,
+        'emergency-fund': setEmergencyFund,
+        'subscription-optimizations': setSubOptimizations,
+        'chat-history': setChatMessages
+      };
+
+      Object.entries(storageKeys).forEach(([key, setter]) => {
+        const data = localStorage.getItem(key);
+        if (data) {
+          setter(JSON.parse(data));
+        }
+      });
     } catch (error) {
       console.error('Error loading from storage:', error);
     }
@@ -63,20 +65,20 @@ const FinancialCoach = () => {
     }
   };
 
-  // Sample transaction data generator
   const generateSampleTransactions = () => {
     const categories = [
-      { name: 'Coffee & Cafes', icon: Coffee, merchants: ['Starbucks', 'Blue Bottle', 'Peets Coffee', 'Local Cafe'] },
-      { name: 'Groceries', icon: ShoppingBag, merchants: ['Whole Foods', 'Trader Joes', 'Safeway', 'Target'] },
-      { name: 'Dining', icon: Utensils, merchants: ['Chipotle', 'Panera', 'Local Restaurant', 'Pizza Place'] },
-      { name: 'Transportation', icon: Car, merchants: ['Uber', 'Lyft', 'Gas Station', 'Parking'] },
-      { name: 'Entertainment', icon: Film, merchants: ['Movie Theater', 'Concert Venue', 'Sports Event'] },
-      { name: 'Utilities', icon: Zap, merchants: ['PG&E', 'Water Company', 'Internet'] },
+      { name: 'Coffee & Cafes', merchants: ['Starbucks', 'Blue Bottle', 'Peets Coffee', 'Local Cafe'] },
+      { name: 'Groceries', merchants: ['Whole Foods', 'Trader Joes', 'Safeway', 'Target'] },
+      { name: 'Dining', merchants: ['Chipotle', 'Panera', 'Local Restaurant', 'Pizza Place'] },
+      { name: 'Transportation', merchants: ['Uber', 'Lyft', 'Gas Station', 'Parking'] },
+      { name: 'Entertainment', merchants: ['Movie Theater', 'Concert Venue', 'Sports Event'] },
+      { name: 'Utilities', merchants: ['PG&E', 'Water Company', 'Internet'] },
     ];
 
     const sampleTx = [];
     const today = new Date();
     
+    // Generate 90 days of transactions
     for (let i = 0; i < 90; i++) {
       const numTxPerDay = Math.floor(Math.random() * 4) + 1;
       
@@ -105,7 +107,7 @@ const FinancialCoach = () => {
       }
     }
 
-    // Add some recurring subscriptions
+    // Add recurring subscriptions
     const subscriptionMerchants = [
       { name: 'Netflix', amount: 15.99, category: 'Entertainment' },
       { name: 'Spotify', amount: 10.99, category: 'Entertainment' },
@@ -143,7 +145,6 @@ const FinancialCoach = () => {
     setApiError('');
     
     try {
-      // Filter for last 30 days FIRST
       const last30Days = transactions.filter(tx => {
         const txDate = new Date(tx.date);
         const thirtyDaysAgo = new Date();
@@ -151,7 +152,6 @@ const FinancialCoach = () => {
         return txDate >= thirtyDaysAgo;
       });
 
-      // Calculate category totals from ONLY last 30 days
       const categoryTotals = last30Days.reduce((acc, tx) => {
         acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
         return acc;
@@ -159,7 +159,6 @@ const FinancialCoach = () => {
 
       const totalSpent = last30Days.reduce((sum, tx) => sum + tx.amount, 0);
       
-      // Detect potential subscriptions from last 30 days transactions
       const merchantCounts = {};
       last30Days.forEach(tx => {
         merchantCounts[tx.merchant] = (merchantCounts[tx.merchant] || 0) + 1;
@@ -197,9 +196,7 @@ Format as JSON:
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt: prompt
-        })
+        body: JSON.stringify({ prompt })
       });
 
       if (!response.ok) {
@@ -255,8 +252,8 @@ Format as JSON:
       const annualSavings = (categoryTotals['Coffee & Cafes'] * 12 * 0.7).toFixed(0);
       newInsights.push({
         type: 'warning',
-        title: '☕ Coffee Spending Alert',
-        message: `You spent $${categoryTotals['Coffee & Cafes'].toFixed(2)} on coffee this month. Brewing at home 3 days a week could save you over $${annualSavings} annually!`,
+        title: 'Coffee Spending Alert',
+        message: `You spent $${categoryTotals['Coffee & Cafes'].toFixed(2)} on coffee this month. Brewing at home 3 days a week could save you over $${annualSavings} annually.`,
         amount: categoryTotals['Coffee & Cafes'],
         category: 'Coffee & Cafes'
       });
@@ -265,7 +262,7 @@ Format as JSON:
     if (categoryTotals['Dining'] > 200) {
       newInsights.push({
         type: 'info',
-        title: '🍽️ Dining Out Frequently',
+        title: 'Dining Out Frequently',
         message: `Your dining expenses are $${categoryTotals['Dining'].toFixed(2)} this month. Meal prepping 2-3 times a week could reduce this by 30-40%.`,
         amount: categoryTotals['Dining'],
         category: 'Dining'
@@ -277,8 +274,8 @@ Format as JSON:
       if (ratio > 1.5) {
         newInsights.push({
           type: 'success',
-          title: '🌟 Great Job on Home Cooking!',
-          message: `You're spending more on groceries than dining out. This shows excellent financial discipline and healthy habits!`,
+          title: 'Great Job on Home Cooking',
+          message: `You're spending more on groceries than dining out. This shows excellent financial discipline and healthy habits.`,
           amount: 0,
           category: 'Groceries'
         });
@@ -415,9 +412,7 @@ Keep it conversational and under 150 words.`;
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt: prompt
-        })
+        body: JSON.stringify({ prompt })
       });
 
       if (!response.ok) {
@@ -439,7 +434,7 @@ Keep it conversational and under 150 words.`;
     } catch (error) {
       console.error('Forecast error:', error);
       setApiError(error.message || 'Failed to connect to AI service.');
-      alert('Error generating forecast. Your goal has been saved!');
+      alert('Error generating forecast. Your goal has been saved.');
     }
     
     setAiAnalyzing(false);
@@ -453,10 +448,7 @@ Keep it conversational and under 150 words.`;
     saveToStorage('financial-subscriptions', updatedSubs);
   };
 
-  // ===============================
-  // NEW FEATURE: AI FINANCIAL ADVISOR CHAT
-  // ===============================
-
+  // AI Chat functionality
   const sendChatMessage = async () => {
     if (!chatInput.trim()) return;
 
@@ -474,7 +466,6 @@ Keep it conversational and under 150 words.`;
     setChatLoading(true);
 
     try {
-      // Build context from user's financial data
       const last30Days = transactions.filter(tx => {
         const txDate = new Date(tx.date);
         const thirtyDaysAgo = new Date();
@@ -494,7 +485,6 @@ Keep it conversational and under 150 words.`;
       const activeSubs = subscriptions.filter(s => s.active);
       const totalSubCost = activeSubs.reduce((sum, s) => sum + s.amount, 0);
 
-      // Build conversation history for context
       const conversationHistory = updatedMessages.slice(-6).map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.content
@@ -562,7 +552,7 @@ INSTRUCTIONS:
       const errorMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: 'Sorry, I encountered an error connecting to the AI service. Please make sure your backend is running and try again.',
+        content: 'Sorry, I encountered an error. Please make sure your backend is running and try again.',
         timestamp: new Date().toISOString()
       };
       const finalMessages = [...updatedMessages, errorMessage];
@@ -588,10 +578,7 @@ INSTRUCTIONS:
     "Help me save $500 this month"
   ];
 
-  // ===============================
-  // FEATURE 1: Emergency Fund Stress Test
-  // ===============================
-  
+  // Advanced features functions
   const runEmergencyFundStressTest = async () => {
     setAiAnalyzing(true);
     setApiError('');
@@ -624,7 +611,7 @@ INSTRUCTIONS:
           name: 'Job Loss',
           monthlyExpense: monthlyEssentials,
           monthsCovered: currentFund / monthlyEssentials,
-          description: 'Essential expenses only (groceries, utilities, transport)'
+          description: 'Essential expenses only'
         },
         medicalEmergency: {
           name: 'Medical Emergency',
@@ -703,10 +690,6 @@ Keep it under 200 words and actionable.`;
     setAiAnalyzing(false);
   };
 
-  // ===============================
-  // FEATURE 2: What-If Financial Simulator
-  // ===============================
-  
   const runWhatIfSimulator = async () => {
     setAiAnalyzing(true);
     setApiError('');
@@ -866,13 +849,9 @@ Keep it under 200 words and practical.`;
     setAiAnalyzing(false);
   };
 
-  // ===============================
-  // FEATURE 3: Subscription Optimization Engine
-  // ===============================
-  
   const optimizeSubscriptions = async () => {
     if (subscriptions.length === 0) {
-      alert('No subscriptions detected. Run AI Analysis first!');
+      alert('No subscriptions detected. Run AI Analysis first.');
       return;
     }
 
@@ -987,68 +966,18 @@ Be specific with alternative services and actual pricing.`;
     setAiAnalyzing(false);
   };
 
-  const SpendingChart = () => {
-    const categoryTotals = transactions.reduce((acc, tx) => {
-      const date = new Date(tx.date);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      if (date >= thirtyDaysAgo) {
-        acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
-      }
-      return acc;
-    }, {});
-
-    const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
-    const sortedCategories = Object.entries(categoryTotals)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Spending by Category (Last 30 Days)</h3>
-        <div className="space-y-3">
-          {sortedCategories.map(([category, amount]) => {
-            const percentage = (amount / total) * 100;
-            return (
-              <div key={category}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium">{category}</span>
-                  <span className="text-sm font-semibold">${amount.toFixed(2)}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${percentage}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">{percentage.toFixed(1)}%</div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex justify-between font-bold">
-            <span>Total Spending</span>
-            <span>${total.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Emergency Fund Display Component
   const EmergencyFundDisplay = () => {
     if (!emergencyFund) {
       return (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <Shield className="mx-auto text-gray-400 mb-4" size={48} />
-          <h3 className="text-xl font-semibold mb-2">Emergency Fund Stress Test</h3>
-          <p className="text-gray-600 mb-6">See how prepared you are for financial emergencies</p>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-16 text-center shadow-sm border border-gray-100">
+          <Shield className="mx-auto text-gray-300 mb-4" size={64} />
+          <h3 className="text-2xl font-semibold text-gray-900 mb-3">Emergency Fund Stress Test</h3>
+          <p className="text-gray-500 mb-8">Test your financial resilience against unexpected events</p>
           <button
             onClick={runEmergencyFundStressTest}
             disabled={aiAnalyzing}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+            className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl hover:shadow-indigo-200 transition-all disabled:opacity-50"
           >
             {aiAnalyzing ? 'Analyzing...' : 'Run Stress Test'}
           </button>
@@ -1058,33 +987,42 @@ Be specific with alternative services and actual pricing.`;
 
     const riskLevel = emergencyFund.scenarios.jobLoss.monthsCovered < 3 ? 'High' : 
                       emergencyFund.scenarios.jobLoss.monthsCovered < 6 ? 'Medium' : 'Low';
-    const riskColor = riskLevel === 'High' ? 'red' : riskLevel === 'Medium' ? 'yellow' : 'green';
+    const riskColors = {
+      High: 'bg-red-100 text-red-800',
+      Medium: 'bg-amber-100 text-amber-800',
+      Low: 'bg-emerald-100 text-emerald-800'
+    };
 
     return (
-      <div className="space-y-4">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-start mb-4">
+      <div className="space-y-6">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="text-xl font-semibold">Emergency Fund Analysis</h3>
-              <p className="text-gray-600">Current Balance: ${emergencyFund.currentFund.toFixed(2)}</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">Emergency Fund Analysis</h3>
+              <p className="text-gray-500">Current Balance: ${emergencyFund.currentFund.toFixed(2)}</p>
             </div>
-            <div className={`px-4 py-2 rounded-full bg-${riskColor}-100 text-${riskColor}-800 font-semibold`}>
-              {riskLevel} Risk
+            <div className={`px-4 py-2 rounded-2xl font-semibold ${
+              emergencyFund.scenarios.jobLoss.monthsCovered < 3 ? 'bg-red-100 text-red-700' :
+              emergencyFund.scenarios.jobLoss.monthsCovered < 6 ? 'bg-amber-100 text-amber-700' :
+              'bg-emerald-100 text-emerald-700'
+            }`}>
+              {emergencyFund.scenarios.jobLoss.monthsCovered < 3 ? 'High Risk' :
+               emergencyFund.scenarios.jobLoss.monthsCovered < 6 ? 'Medium Risk' : 'Low Risk'}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {Object.entries(emergencyFund.scenarios).map(([key, scenario]) => (
-              <div key={key} className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={20} className="text-orange-600" />
-                  <h4 className="font-semibold">{scenario.name}</h4>
+              <div key={key} className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-2xl border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle size={20} className="text-amber-600" />
+                  <h4 className="font-semibold text-gray-900">{scenario.name}</h4>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{scenario.description}</p>
+                <p className="text-sm text-gray-600 mb-3">{scenario.description}</p>
                 {scenario.oneTimeCost && (
-                  <p className="text-sm text-red-600 mb-1">Initial Cost: ${scenario.oneTimeCost}</p>
+                  <p className="text-sm text-red-600 mb-2">Initial Cost: ${scenario.oneTimeCost}</p>
                 )}
-                <p className="text-lg font-bold text-blue-600">
+                <p className="text-xl font-bold text-indigo-600">
                   {scenario.monthsCovered > 0 
                     ? `${scenario.monthsCovered.toFixed(1)} months` 
                     : 'Insufficient funds'}
@@ -1093,23 +1031,23 @@ Be specific with alternative services and actual pricing.`;
             ))}
           </div>
 
-          <div className="bg-blue-50 p-6 rounded-lg mb-4">
-            <h4 className="font-semibold mb-2 flex items-center gap-2">
-              <Lightbulb className="text-blue-600" />
+          <div className="bg-indigo-50 p-6 rounded-3xl mb-6">
+            <h4 className="font-semibold mb-3 flex items-center gap-2 text-gray-900">
+              <Lightbulb className="text-indigo-600" />
               AI Recommendation
             </h4>
-            <p className="text-gray-700 whitespace-pre-line">{emergencyFund.aiAnalysis}</p>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">{emergencyFund.aiAnalysis}</p>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex justify-between items-center pt-6 border-t border-gray-100">
             <div>
-              <p className="text-sm text-gray-600">Recommended Fund Size</p>
-              <p className="text-xl font-bold text-green-600">${emergencyFund.recommendedFund.toFixed(2)}</p>
-              <p className="text-sm text-gray-500">({(emergencyFund.recommendedFund / emergencyFund.monthlyEssentials).toFixed(0)} months of essential expenses)</p>
+              <p className="text-sm text-gray-500 mb-1">Recommended Fund</p>
+              <p className="text-2xl font-bold text-emerald-600">${emergencyFund.recommendedFund.toFixed(2)}</p>
+              <p className="text-sm text-gray-500">{(emergencyFund.recommendedFund / emergencyFund.monthlyEssentials).toFixed(0)} months coverage</p>
             </div>
             <button
               onClick={runEmergencyFundStressTest}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors font-medium"
             >
               Re-test
             </button>
@@ -1119,20 +1057,20 @@ Be specific with alternative services and actual pricing.`;
     );
   };
 
-  // What-If Simulator Display Component
+  // What-If Simulator Display
   const WhatIfSimulatorDisplay = () => {
     if (!whatIfScenario) {
       return (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <Calculator className="mx-auto text-gray-400 mb-4" size={48} />
-          <h3 className="text-xl font-semibold mb-2">What-If Financial Simulator</h3>
-          <p className="text-gray-600 mb-6">Explore how life changes could impact your finances</p>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-16 text-center shadow-sm border border-gray-100">
+          <Calculator className="mx-auto text-gray-300 mb-4" size={64} />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Financial Scenarios</h3>
+          <p className="text-gray-500 mb-6">Explore how life changes could impact your finances</p>
           <button
             onClick={runWhatIfSimulator}
             disabled={aiAnalyzing}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+            className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50"
           >
-            {aiAnalyzing ? 'Simulating...' : 'Run Simulation'}
+            {aiAnalyzing ? 'Analyzing...' : 'Run Simulation'}
           </button>
         </div>
       );
@@ -1141,46 +1079,46 @@ Be specific with alternative services and actual pricing.`;
     const isPositive = whatIfScenario.totalImpact > 0;
 
     return (
-      <div className="space-y-4">
-        <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="space-y-6">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="text-xl font-semibold">{whatIfScenario.scenario.type}</h3>
-              <p className="text-gray-600">{whatIfScenario.scenario.description}</p>
+              <h3 className="text-2xl font-bold text-gray-900">{whatIfScenario.scenario.type}</h3>
+              <p className="text-gray-500 mt-1">{whatIfScenario.scenario.description}</p>
             </div>
             <button
               onClick={runWhatIfSimulator}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium"
             >
-              New Simulation
+              New Scenario
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-gray-50 p-6 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div className="bg-gray-50 rounded-2xl p-6">
               <h4 className="font-semibold mb-4 text-gray-700">Current Situation</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Monthly Income</span>
-                  <span className="font-semibold">${whatIfScenario.current.income.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-900">${whatIfScenario.current.income.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Monthly Expenses</span>
                   <span className="font-semibold text-red-600">-${whatIfScenario.current.expenses.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t">
-                  <span className="font-semibold">Monthly Savings</span>
-                  <span className="font-bold text-blue-600">${whatIfScenario.current.savings.toFixed(2)}</span>
+                <div className="flex justify-between pt-3 border-t border-gray-200">
+                  <span className="font-semibold text-gray-700">Monthly Savings</span>
+                  <span className="font-bold text-indigo-600">${whatIfScenario.current.savings.toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
-              <h4 className="font-semibold mb-4 text-purple-700">Projected Outcome</h4>
-              <div className="space-y-2">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-200">
+              <h4 className="font-semibold mb-4 text-indigo-700">Projected Outcome</h4>
+              <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Monthly Income</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-gray-900">
                     ${whatIfScenario.projected.income.toFixed(2)}
                     {whatIfScenario.scenario.incomeChange !== 0 && (
                       <span className={`text-xs ml-2 ${whatIfScenario.scenario.incomeChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1200,57 +1138,56 @@ Be specific with alternative services and actual pricing.`;
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-purple-200">
-                  <span className="font-semibold">Monthly Savings</span>
+                <div className="flex justify-between pt-3 border-t border-indigo-200">
+                  <span className="font-semibold text-gray-700">Monthly Savings</span>
                   <span className="font-bold text-purple-700">${whatIfScenario.projected.savings.toFixed(2)}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className={`p-6 rounded-lg mb-4 ${isPositive ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
+          <div className={`mt-6 p-6 rounded-2xl ${whatIfScenario.totalImpact > 0 ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-semibold flex items-center gap-2">
-                {isPositive ? <TrendingUp className="text-green-600" /> : <AlertTriangle className="text-red-600" />}
+                <TrendingUp className={whatIfScenario.totalImpact > 0 ? 'text-green-600' : 'text-red-600'} />
                 Total Impact ({whatIfScenario.scenario.timeframe} months)
               </h4>
-              <span className={`text-2xl font-bold ${isPositive ? 'text-green-700' : 'text-red-700'}`}>
-                {isPositive ? '+' : ''}${whatIfScenario.totalImpact.toFixed(2)}
+              <span className={`text-2xl font-bold ${whatIfScenario.totalImpact > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {whatIfScenario.totalImpact > 0 ? '+' : ''}${whatIfScenario.totalImpact.toFixed(2)}
               </span>
             </div>
             <p className="text-sm text-gray-600">
-              Your monthly savings would {isPositive ? 'increase' : 'decrease'} by ${Math.abs(whatIfScenario.projected.savings - whatIfScenario.current.savings).toFixed(2)}
+              Your monthly savings would {whatIfScenario.totalImpact > 0 ? 'increase' : 'decrease'} by ${Math.abs(whatIfScenario.projected.savings - whatIfScenario.current.savings).toFixed(2)}
             </p>
           </div>
 
-          <div className="bg-blue-50 p-6 rounded-lg">
-            <h4 className="font-semibold mb-2 flex items-center gap-2">
-              <Lightbulb className="text-blue-600" />
+          <div className="mt-6 bg-indigo-50 rounded-2xl p-6">
+            <h4 className="font-semibold mb-3 flex items-center gap-2 text-indigo-900">
+              <Lightbulb className="text-indigo-600" />
               AI Analysis
             </h4>
-            <p className="text-gray-700 whitespace-pre-line">{whatIfScenario.aiAnalysis}</p>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">{whatIfScenario.aiAnalysis}</p>
           </div>
         </div>
       </div>
     );
   };
 
-  // Subscription Optimization Display Component
-  const SubscriptionOptimizationDisplay = () => {
+  const SubscriptionOptimizerDisplay = () => {
     const [expandedSub, setExpandedSub] = useState(null);
 
     if (subOptimizations.length === 0) {
       return (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <Save className="mx-auto text-gray-400 mb-4" size={48} />
-          <h3 className="text-xl font-semibold mb-2">Subscription Optimizer</h3>
-          <p className="text-gray-600 mb-6">Find better deals and cut unnecessary subscriptions</p>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-16 text-center shadow-sm border border-gray-100">
+          <Save className="mx-auto text-gray-300 mb-4" size={64} />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Subscription Optimizer</h3>
+          <p className="text-gray-500 mb-6">Find better deals and eliminate wasteful spending</p>
           <button
             onClick={optimizeSubscriptions}
             disabled={aiAnalyzing || subscriptions.length === 0}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
+            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50"
           >
-            {aiAnalyzing ? 'Optimizing...' : subscriptions.length === 0 ? 'Detect Subscriptions First' : 'Optimize Subscriptions'}
+            {aiAnalyzing ? 'Optimizing...' : subscriptions.length === 0 ? 'Detect Subscriptions First' : 'Optimize Now'}
           </button>
         </div>
       );
@@ -1261,56 +1198,56 @@ Be specific with alternative services and actual pricing.`;
 
     const getRecommendationColor = (rec) => {
       switch(rec) {
-        case 'Cancel': return 'red';
-        case 'Downgrade': return 'yellow';
-        case 'Switch': return 'blue';
-        case 'Keep': return 'green';
-        default: return 'gray';
+        case 'Cancel': return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', badge: 'bg-red-200' };
+        case 'Downgrade': return { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', badge: 'bg-amber-200' };
+        case 'Switch': return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', badge: 'bg-blue-200' };
+        case 'Keep': return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-800', badge: 'bg-green-200' };
+        default: return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', badge: 'bg-gray-200' };
       }
     };
 
     return (
-      <div className="space-y-4">
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow-md p-6">
+      <div className="space-y-6">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-3xl p-8 shadow-lg shadow-green-200">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-2xl font-bold mb-2">Potential Annual Savings</h3>
-              <p className="text-green-100">Based on AI optimization recommendations</p>
+              <p className="text-green-100">Based on AI recommendations</p>
             </div>
             <div className="text-right">
-              <div className="text-4xl font-bold">${(totalSavings * 12).toFixed(2)}</div>
-              <div className="text-green-100">${totalSavings.toFixed(2)}/month</div>
+              <div className="text-5xl font-bold">${(totalSavings * 12).toFixed(2)}</div>
+              <div className="text-green-100 text-lg mt-1">${totalSavings.toFixed(2)}/month</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Optimization Recommendations</h3>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Optimization Recommendations</h3>
             <button
               onClick={optimizeSubscriptions}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium"
             >
               Re-analyze
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {subOptimizations.map((opt, idx) => {
-              const color = getRecommendationColor(opt.recommendation);
+              const colors = getRecommendationColor(opt.recommendation);
               const isExpanded = expandedSub === idx;
 
               return (
-                <div key={idx} className={`border-2 border-${color}-200 rounded-lg overflow-hidden`}>
+                <div key={idx} className={`border-2 ${colors.border} rounded-2xl overflow-hidden`}>
                   <div 
-                    className={`bg-${color}-50 p-4 cursor-pointer hover:bg-${color}-100 transition-colors`}
+                    className={`${colors.bg} p-5 cursor-pointer hover:opacity-90 transition-all`}
                     onClick={() => setExpandedSub(isExpanded ? null : idx)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-lg">{opt.merchant}</h4>
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium bg-${color}-200 text-${color}-800`}>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-lg text-gray-900">{opt.merchant}</h4>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${colors.badge} ${colors.text}`}>
                             {opt.recommendation}
                           </span>
                         </div>
@@ -1319,19 +1256,19 @@ Be specific with alternative services and actual pricing.`;
                       <div className="text-right ml-4">
                         <div className="text-gray-500 line-through text-sm">${opt.currentCost.toFixed(2)}/mo</div>
                         {opt.potentialSavings > 0 && (
-                          <div className="text-green-600 font-bold">Save ${opt.potentialSavings.toFixed(2)}/mo</div>
+                          <div className="text-green-600 font-bold text-lg">Save ${opt.potentialSavings.toFixed(2)}/mo</div>
                         )}
-                        {isExpanded ? <ChevronUp className="mt-2" /> : <ChevronDown className="mt-2" />}
+                        {isExpanded ? <ChevronUp className="mt-2 text-gray-400" size={20} /> : <ChevronDown className="mt-2 text-gray-400" size={20} />}
                       </div>
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div className="bg-white p-4 border-t-2 border-gray-100">
+                    <div className="bg-white p-5 border-t-2 border-gray-100">
                       {opt.alternative && (
                         <div className="mb-4">
                           <p className="font-semibold text-sm text-gray-700 mb-1">Recommended Alternative:</p>
-                          <p className="text-blue-600 font-medium">{opt.alternative}</p>
+                          <p className="text-indigo-600 font-medium">{opt.alternative}</p>
                         </div>
                       )}
                       
@@ -1347,9 +1284,9 @@ Be specific with alternative services and actual pricing.`;
                       )}
 
                       {opt.potentialSavings > 0 && (
-                        <div className="mt-4 pt-4 border-t bg-green-50 p-3 rounded">
+                        <div className="mt-4 pt-4 border-t bg-green-50 rounded-xl p-4">
                           <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Annual Impact:</span> Save ${(opt.potentialSavings * 12).toFixed(2)}/year
+                            <span className="font-semibold">Annual Impact:</span> Save ${(opt.potentialSavings * 12).toFixed(2)} per year
                           </p>
                         </div>
                       )}
@@ -1360,17 +1297,17 @@ Be specific with alternative services and actual pricing.`;
             })}
           </div>
 
-          <div className="mt-6 pt-6 border-t">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Summary</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="bg-indigo-50 rounded-2xl p-6">
+              <h4 className="font-semibold mb-4 text-indigo-900">Summary</h4>
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-gray-600">Current Monthly Cost</p>
-                  <p className="font-bold text-lg">${currentTotal.toFixed(2)}</p>
+                  <p className="text-gray-600 text-sm mb-1">Current Monthly Cost</p>
+                  <p className="font-bold text-2xl text-gray-900">${currentTotal.toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Optimized Monthly Cost</p>
-                  <p className="font-bold text-lg text-green-600">${(currentTotal - totalSavings).toFixed(2)}</p>
+                  <p className="text-gray-600 text-sm mb-1">Optimized Monthly Cost</p>
+                  <p className="font-bold text-2xl text-green-600">${(currentTotal - totalSavings).toFixed(2)}</p>
                 </div>
               </div>
             </div>
@@ -1380,51 +1317,140 @@ Be specific with alternative services and actual pricing.`;
     );
   };
 
+  // UI Components with premium design
+  const SpendingChart = () => {
+    const categoryTotals = transactions.reduce((acc, tx) => {
+      const date = new Date(tx.date);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      if (date >= thirtyDaysAgo) {
+        acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
+      }
+      return acc;
+    }, {});
+
+    const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
+    const sortedCategories = Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+
+    const categoryColors = {
+      'Coffee & Cafes': '#8B4513',
+      'Groceries': '#10B981',
+      'Dining': '#F59E0B',
+      'Transportation': '#3B82F6',
+      'Entertainment': '#8B5CF6',
+      'Utilities': '#EF4444',
+      'Software': '#06B6D4',
+      'Health': '#EC4899',
+      'Shopping': '#F97316',
+      'News': '#6366F1'
+    };
+
+    return (
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100">
+        <h3 className="text-xl font-semibold mb-6 text-gray-900">Spending Overview</h3>
+        <div className="space-y-4">
+          {sortedCategories.map(([category, amount]) => {
+            const percentage = (amount / total) * 100;
+            const color = categoryColors[category] || '#6B7280';
+            
+            return (
+              <div key={category}>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">{category}</span>
+                  <span className="text-sm font-semibold text-gray-900">${amount.toFixed(2)}</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-2 rounded-full transition-all duration-700 ease-out"
+                    style={{ 
+                      width: `${percentage}%`,
+                      backgroundColor: color
+                    }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">{percentage.toFixed(1)}% of total</div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Total Spending</span>
+            <span className="text-2xl font-bold text-gray-900">${total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const navigationItems = [
+    { id: 'dashboard', label: 'Overview', icon: DollarSign },
+    { id: 'insights', label: 'Insights', icon: Lightbulb },
+    { id: 'goals', label: 'Goals', icon: Target },
+    { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+    { id: 'emergency-fund', label: 'Safety Net', icon: Shield },
+    { id: 'what-if', label: 'Scenarios', icon: Calculator },
+    { id: 'sub-optimizer', label: 'Optimize', icon: Save },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto p-6 pb-32">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Top Navigation Bar */}
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-                <DollarSign className="text-green-600" />
-                Smart Financial Coach
-              </h1>
-              <p className="text-gray-600 mt-1">AI-powered insights for better financial decisions</p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <Menu size={24} />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                  <DollarSign className="text-white" size={24} />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">FinanceAI</h1>
+                  <p className="text-xs text-gray-500">Your Personal CFO</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-3">
-              {transactions.length === 0 && (
+            
+            <div className="flex items-center gap-3">
+              {transactions.length === 0 ? (
                 <button
                   onClick={generateSampleTransactions}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200"
                 >
-                  Load Sample Data
+                  Get Started
                 </button>
-              )}
-              {transactions.length > 0 && (
+              ) : (
                 <>
                   <button
                     onClick={() => setChatOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium flex items-center gap-2 shadow-lg"
+                    className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200"
                   >
-                    <Sparkles size={20} />
-                    Ask AI Advisor
+                    <Sparkles size={18} />
+                    <span>Ask AI</span>
                   </button>
                   <button
                     onClick={analyzeWithAI}
                     disabled={aiAnalyzing}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200 disabled:opacity-50"
                   >
                     {aiAnalyzing ? (
                       <>
-                        <Loader className="animate-spin" size={20} />
-                        Analyzing...
+                        <Loader className="animate-spin" size={18} />
+                        <span className="hidden sm:inline">Analyzing</span>
                       </>
                     ) : (
                       <>
-                        <Zap size={20} />
-                        AI Analysis
+                        <Zap size={18} />
+                        <span className="hidden sm:inline">Analyze</span>
                       </>
                     )}
                   </button>
@@ -1432,240 +1458,312 @@ Be specific with alternative services and actual pricing.`;
               )}
             </div>
           </div>
-          
-          {apiError && (
-            <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-              <div className="flex">
-                <AlertCircle className="text-yellow-400 mr-3" size={20} />
-                <div>
-                  <p className="text-sm text-yellow-700 font-medium">API Connection Issue</p>
-                  <p className="text-sm text-yellow-600 mt-1">{apiError}</p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+      </nav>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-md mb-6">
-          <div className="flex border-b overflow-x-auto">
-            {['dashboard', 'insights', 'goals', 'subscriptions', 'emergency-fund', 'what-if', 'sub-optimizer'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-6 py-4 font-medium capitalize transition-colors whitespace-nowrap ${
-                  activeTab === tab
-                    ? 'border-b-2 border-blue-600 text-blue-600'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                {tab.replace('-', ' ')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && transactions.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SpendingChart />
-            
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {transactions.slice(0, 10).map(tx => (
-                  <div key={tx.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <div>
-                      <div className="font-medium">{tx.merchant}</div>
-                      <div className="text-sm text-gray-600">{new Date(tx.date).toLocaleDateString()}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-red-600">-${tx.amount.toFixed(2)}</div>
-                      <div className="text-xs text-gray-500">{tx.category}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Error Display */}
+        {apiError && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+            <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-900">Connection Issue</p>
+              <p className="text-sm text-amber-700 mt-1">{apiError}</p>
             </div>
           </div>
         )}
 
-        {/* Insights Tab */}
-        {activeTab === 'insights' && (
-          <div className="space-y-4">
-            {insights.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
-                <p className="text-gray-600">Click "AI Analysis" to get personalized insights</p>
-              </div>
-            ) : (
-              insights.map((insight, idx) => (
-                <div
-                  key={idx}
-                  className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${
-                    insight.type === 'warning' ? 'border-yellow-500' :
-                    insight.type === 'success' ? 'border-green-500' :
-                    'border-blue-500'
-                  }`}
-                >
-                  <h3 className="font-semibold text-lg mb-2">{insight.title}</h3>
-                  <p className="text-gray-700">{insight.message}</p>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        {/* Main Content */}
+        <div className="flex gap-6">
+          {/* Sidebar Navigation */}
+          <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-64 flex-shrink-0`}>
+            <div className="sticky top-24">
+              <nav className="space-y-1">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                        activeTab === item.id
+                          ? 'bg-indigo-50 text-indigo-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon size={20} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </aside>
 
-        {/* Goals Tab */}
-        {activeTab === 'goals' && (
-          <div className="space-y-4">
-            <button
-              onClick={addGoal}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium w-full"
-            >
-              + Add New Goal
-            </button>
-            
-            {goals.map(goal => {
-              const progress = (goal.currentAmount / goal.targetAmount) * 100;
-              const monthsLeft = Math.ceil((new Date(goal.targetDate) - new Date()) / (30 * 24 * 60 * 60 * 1000));
-              
-              return (
-                <div key={goal.id} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold">{goal.name}</h3>
-                      <p className="text-gray-600">Target: ${goal.targetAmount.toFixed(2)}</p>
-                    </div>
-                    <Target className="text-blue-600" size={32} />
+          {/* Main Content Area */}
+          <main className="flex-1 min-w-0">
+            {/* Dashboard Tab */}
+            {activeTab === 'dashboard' && transactions.length > 0 && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Stats Cards */}
+                  <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200">
+                    <p className="text-indigo-100 text-sm font-medium mb-1">Total Spending</p>
+                    <p className="text-3xl font-bold">
+                      ${transactions
+                        .filter(tx => {
+                          const txDate = new Date(tx.date);
+                          const thirtyDaysAgo = new Date();
+                          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                          return txDate >= thirtyDaysAgo;
+                        })
+                        .reduce((sum, tx) => sum + tx.amount, 0)
+                        .toFixed(2)}
+                    </p>
+                    <p className="text-indigo-100 text-sm mt-1">Last 30 days</p>
                   </div>
                   
-                  <div className="mb-3">
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div 
-                        className="bg-green-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(progress, 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between mt-2 text-sm">
-                      <span>${goal.currentAmount.toFixed(2)}</span>
-                      <span className="font-semibold">{progress.toFixed(1)}%</span>
-                    </div>
+                  <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+                    <p className="text-gray-600 text-sm font-medium mb-1">Active Subscriptions</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {subscriptions.filter(s => s.active).length}
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      ${subscriptions.filter(s => s.active).reduce((sum, s) => sum + s.amount, 0).toFixed(2)}/mo
+                    </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="text-gray-600">Monthly Target</div>
-                      <div className="font-semibold">${goal.monthlyTarget.toFixed(2)}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Months Remaining</div>
-                      <div className="font-semibold">{monthsLeft}</div>
-                    </div>
+                  <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+                    <p className="text-gray-600 text-sm font-medium mb-1">Active Goals</p>
+                    <p className="text-3xl font-bold text-gray-900">{goals.length}</p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      {goals.length > 0 ? 'Keep pushing forward' : 'Set your first goal'}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
 
-        {/* Subscriptions Tab */}
-        {activeTab === 'subscriptions' && (
-          <div className="space-y-4">
-            {subscriptions.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <CreditCard className="mx-auto text-gray-400 mb-4" size={48} />
-                <p className="text-gray-600">Run AI Analysis to detect recurring subscriptions</p>
-              </div>
-            ) : (
-              <>
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-lg font-semibold mb-2">Subscription Summary</h3>
-                  <div className="text-3xl font-bold text-blue-600">
-                    ${subscriptions.filter(s => s.active).reduce((sum, s) => sum + s.amount, 0).toFixed(2)}
-                    <span className="text-sm text-gray-600 font-normal">/month</span>
-                  </div>
-                  <p className="text-gray-600 mt-1">{subscriptions.filter(s => s.active).length} active subscriptions</p>
-                </div>
-                
-                {subscriptions.map(sub => (
-                  <div key={sub.id} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{sub.merchant}</h3>
-                        <p className="text-gray-600">{sub.category}</p>
-                        <p className="text-sm text-gray-500 mt-1">Last charged: {sub.lastCharge}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-800">${sub.amount.toFixed(2)}</div>
-                        <div className="text-sm text-gray-600">{sub.frequency}</div>
-                        {sub.active ? (
-                          <button
-                            onClick={() => cancelSubscription(sub.id)}
-                            className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
-                          >
-                            <XCircle size={16} />
-                            Mark as Cancelled
-                          </button>
-                        ) : (
-                          <div className="mt-2 text-green-600 text-sm font-medium flex items-center gap-1">
-                            <CheckCircle size={16} />
-                            Cancelled
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <SpendingChart />
+                  
+                  <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100">
+                    <h3 className="text-xl font-semibold mb-6 text-gray-900">Recent Activity</h3>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {transactions.slice(0, 10).map(tx => (
+                        <div key={tx.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
+                          <div>
+                            <div className="font-medium text-gray-900">{tx.merchant}</div>
+                            <div className="text-sm text-gray-500">{new Date(tx.date).toLocaleDateString()}</div>
                           </div>
-                        )}
-                      </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">-${tx.amount.toFixed(2)}</div>
+                            <div className="text-xs text-gray-500">{tx.category}</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </>
+                </div>
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Emergency Fund Tab */}
-        {activeTab === 'emergency-fund' && <EmergencyFundDisplay />}
+            {/* Insights Tab */}
+            {activeTab === 'insights' && (
+              <div className="space-y-4">
+                {insights.length === 0 ? (
+                  <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-16 text-center shadow-sm border border-gray-100">
+                    <Lightbulb className="mx-auto text-gray-300 mb-4" size={64} />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Insights Yet</h3>
+                    <p className="text-gray-500 mb-6">Run an AI analysis to get personalized financial insights</p>
+                    <button
+                      onClick={analyzeWithAI}
+                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-indigo-200 transition-all"
+                    >
+                      Analyze Now
+                    </button>
+                  </div>
+                ) : (
+                  insights.map((insight, idx) => (
+                    <div
+                      key={idx}
+                      className={`bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border-l-4 ${
+                        insight.type === 'warning' ? 'border-amber-400' :
+                        insight.type === 'success' ? 'border-emerald-400' :
+                        'border-indigo-400'
+                      }`}
+                    >
+                      <h3 className="font-semibold text-lg mb-2 text-gray-900">{insight.title}</h3>
+                      <p className="text-gray-600 leading-relaxed">{insight.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
 
-        {/* What-If Simulator Tab */}
-        {activeTab === 'what-if' && <WhatIfSimulatorDisplay />}
+            {/* Goals Tab */}
+            {activeTab === 'goals' && (
+              <div className="space-y-6">
+                <button
+                  onClick={addGoal}
+                  className="w-full p-6 bg-white/80 backdrop-blur-xl rounded-3xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all text-gray-600 hover:text-indigo-600 font-medium"
+                >
+                  + Add New Goal
+                </button>
+                
+                {goals.map(goal => {
+                  const progress = (goal.currentAmount / goal.targetAmount) * 100;
+                  const monthsLeft = Math.ceil((new Date(goal.targetDate) - new Date()) / (30 * 24 * 60 * 60 * 1000));
+                  
+                  return (
+                    <div key={goal.id} className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-900 mb-1">{goal.name}</h3>
+                          <p className="text-gray-500">Target: ${goal.targetAmount.toFixed(2)}</p>
+                        </div>
+                        <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                          <Target className="text-indigo-600" size={28} />
+                        </div>
+                      </div>
+                      
+                      <div className="mb-6">
+                        <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-indigo-600 to-purple-600 h-3 rounded-full transition-all duration-700"
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between mt-3">
+                          <span className="text-sm text-gray-600">${goal.currentAmount.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-indigo-600">{progress.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50 rounded-2xl p-4">
+                          <div className="text-sm text-gray-600 mb-1">Monthly Target</div>
+                          <div className="text-lg font-semibold text-gray-900">${goal.monthlyTarget.toFixed(2)}</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-2xl p-4">
+                          <div className="text-sm text-gray-600 mb-1">Time Remaining</div>
+                          <div className="text-lg font-semibold text-gray-900">{monthsLeft} months</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-        {/* Subscription Optimizer Tab */}
-        {activeTab === 'sub-optimizer' && <SubscriptionOptimizationDisplay />}
+            {/* Subscriptions Tab */}
+            {activeTab === 'subscriptions' && (
+              <div className="space-y-6">
+                {subscriptions.length === 0 ? (
+                  <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-16 text-center shadow-sm border border-gray-100">
+                    <CreditCard className="mx-auto text-gray-300 mb-4" size={64} />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Subscriptions Found</h3>
+                    <p className="text-gray-500">Run AI Analysis to detect recurring subscriptions</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-8 text-white shadow-lg shadow-indigo-200">
+                      <h3 className="text-lg font-medium mb-1 text-indigo-100">Monthly Subscriptions</h3>
+                      <div className="text-4xl font-bold mb-2">
+                        ${subscriptions.filter(s => s.active).reduce((sum, s) => sum + s.amount, 0).toFixed(2)}
+                      </div>
+                      <p className="text-indigo-100">{subscriptions.filter(s => s.active).length} active subscriptions</p>
+                    </div>
+                    
+                    {subscriptions.map(sub => (
+                      <div key={sub.id} className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900">{sub.merchant}</h3>
+                            <p className="text-gray-500 text-sm mt-1">{sub.category}</p>
+                            <p className="text-gray-400 text-xs mt-2">Last charged: {sub.lastCharge}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-gray-900">${sub.amount.toFixed(2)}</div>
+                            <div className="text-sm text-gray-500 mb-3">{sub.frequency}</div>
+                            {sub.active ? (
+                              <button
+                                onClick={() => cancelSubscription(sub.id)}
+                                className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-1"
+                              >
+                                <XCircle size={16} />
+                                Cancel
+                              </button>
+                            ) : (
+                              <div className="text-emerald-600 text-sm font-medium flex items-center gap-1">
+                                <CheckCircle size={16} />
+                                Cancelled
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
 
-        {transactions.length === 0 && (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <DollarSign className="mx-auto text-gray-400 mb-4" size={64} />
-            <h2 className="text-2xl font-semibold mb-2">Welcome to Smart Financial Coach</h2>
-            <p className="text-gray-600 mb-6">Get started by loading sample transaction data to see AI-powered insights in action</p>
-          </div>
-        )}
+            {/* Safety Net (Emergency Fund) Tab */}
+            {activeTab === 'emergency-fund' && <EmergencyFundDisplay />}
+
+            {/* Scenarios (What-If) Tab */}
+            {activeTab === 'what-if' && <WhatIfSimulatorDisplay />}
+
+            {/* Optimize (Subscription Optimizer) Tab */}
+            {activeTab === 'sub-optimizer' && <SubscriptionOptimizerDisplay />}
+
+            {/* Empty State */}
+            {transactions.length === 0 && (
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-16 text-center shadow-sm border border-gray-100">
+                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+                  <DollarSign className="text-indigo-600" size={40} />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-3">Welcome to FinanceAI</h2>
+                <p className="text-gray-500 mb-8 max-w-md mx-auto">Your AI-powered personal CFO. Get started with sample data to explore powerful financial insights.</p>
+                <button
+                  onClick={generateSampleTransactions}
+                  className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl hover:shadow-indigo-200 transition-all duration-200"
+                >
+                  Load Sample Data
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
 
-      {/* AI Chat Interface - Floating Bottom Right */}
+      {/* AI Chat Interface */}
       {chatOpen && (
-        <div className={`fixed ${chatMinimized ? 'bottom-4 right-4' : 'bottom-0 right-0 md:bottom-4 md:right-4'} z-50 transition-all duration-300`}>
-          <div className={`bg-white rounded-lg shadow-2xl ${chatMinimized ? 'w-16 h-16' : 'w-full md:w-96 h-screen md:h-[600px]'} flex flex-col overflow-hidden`}>
+        <div className={`fixed ${chatMinimized ? 'bottom-6 right-6' : 'bottom-0 right-0 md:bottom-6 md:right-6'} z-50 transition-all duration-300`}>
+          <div className={`bg-white rounded-3xl shadow-2xl ${chatMinimized ? 'w-16 h-16' : 'w-full md:w-96 h-screen md:h-[600px]'} flex flex-col overflow-hidden border border-gray-200`}>
             {chatMinimized ? (
               <button
                 onClick={() => setChatMinimized(false)}
-                className="w-full h-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+                className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-3xl hover:shadow-lg transition-all"
               >
                 <MessageCircle size={28} />
               </button>
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={24} />
+                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-5 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <Sparkles size={20} />
+                    </div>
                     <div>
-                      <h3 className="font-bold text-lg">AI Financial Advisor</h3>
-                      <p className="text-xs text-purple-100">Your personal CFO</p>
+                      <h3 className="font-semibold text-base">AI Advisor</h3>
+                      <p className="text-xs text-indigo-100">Always here to help</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setChatMinimized(true)}
-                      className="p-2 hover:bg-purple-700 rounded transition-colors"
+                      className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                     >
                       <Minimize2 size={18} />
                     </button>
@@ -1674,7 +1772,7 @@ Be specific with alternative services and actual pricing.`;
                         setChatOpen(false);
                         setChatMinimized(false);
                       }}
-                      className="p-2 hover:bg-purple-700 rounded transition-colors"
+                      className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                     >
                       <X size={18} />
                     </button>
@@ -1682,23 +1780,23 @@ Be specific with alternative services and actual pricing.`;
                 </div>
 
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">
                   {chatMessages.length === 0 ? (
                     <div className="text-center py-8">
-                      <Sparkles className="mx-auto text-purple-400 mb-4" size={48} />
-                      <h4 className="font-semibold text-gray-700 mb-2">Ask me anything about your finances!</h4>
-                      <p className="text-sm text-gray-600 mb-4">I have access to all your spending data and can give personalized advice.</p>
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-500 font-semibold">Quick questions:</p>
+                      <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <Sparkles className="text-indigo-600" size={28} />
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">How can I help?</h4>
+                      <p className="text-sm text-gray-500 mb-6 px-4">I have access to your spending data and can provide personalized advice.</p>
+                      <div className="space-y-2 px-2">
+                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-3">Quick Questions</p>
                         {quickQuestions.map((q, idx) => (
                           <button
                             key={idx}
-                            onClick={() => {
-                              setChatInput(q);
-                            }}
-                            className="block w-full text-left px-3 py-2 bg-white rounded-lg hover:bg-purple-50 text-sm text-gray-700 transition-colors"
+                            onClick={() => setChatInput(q)}
+                            className="block w-full text-left px-4 py-3 bg-white rounded-2xl hover:bg-indigo-50 text-sm text-gray-700 transition-all hover:shadow-sm border border-gray-100"
                           >
-                            💡 {q}
+                            {q}
                           </button>
                         ))}
                       </div>
@@ -1710,15 +1808,15 @@ Be specific with alternative services and actual pricing.`;
                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[80%] p-3 rounded-lg ${
+                          className={`max-w-[85%] p-4 rounded-2xl ${
                             msg.role === 'user'
-                              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                              : 'bg-white text-gray-800 shadow'
+                              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+                              : 'bg-white text-gray-800 shadow-sm border border-gray-100'
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                          <p className={`text-xs mt-1 ${msg.role === 'user' ? 'text-purple-100' : 'text-gray-400'}`}>
-                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                          <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-indigo-100' : 'text-gray-400'}`}>
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
@@ -1726,7 +1824,7 @@ Be specific with alternative services and actual pricing.`;
                   )}
                   {chatLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-white text-gray-800 shadow p-3 rounded-lg">
+                      <div className="bg-white text-gray-800 shadow-sm p-4 rounded-2xl border border-gray-100">
                         <Loader className="animate-spin" size={20} />
                       </div>
                     </div>
@@ -1735,31 +1833,31 @@ Be specific with alternative services and actual pricing.`;
                 </div>
 
                 {/* Chat Input */}
-                <div className="p-4 bg-white border-t">
+                <div className="p-4 bg-white border-t border-gray-100">
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                      placeholder="Ask about your finances..."
-                      className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      placeholder="Ask me anything..."
+                      className="flex-1 px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-sm"
                       disabled={chatLoading}
                     />
                     <button
                       onClick={sendChatMessage}
                       disabled={!chatInput.trim() || chatLoading}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl hover:shadow-lg hover:shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
-                      <Send size={20} />
+                      <Send size={18} />
                     </button>
                   </div>
                   {chatMessages.length > 0 && (
                     <button
                       onClick={clearChatHistory}
-                      className="text-xs text-gray-500 hover:text-gray-700 mt-2"
+                      className="text-xs text-gray-400 hover:text-gray-600 mt-3 transition-colors"
                     >
-                      Clear history
+                      Clear conversation
                     </button>
                   )}
                 </div>
@@ -1769,11 +1867,11 @@ Be specific with alternative services and actual pricing.`;
         </div>
       )}
 
-      {/* Floating Chat Button when closed */}
+      {/* Floating Chat Button */}
       {!chatOpen && transactions.length > 0 && (
         <button
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center z-50"
+          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-full shadow-2xl shadow-indigo-300 hover:scale-110 transition-transform flex items-center justify-center z-50"
         >
           <MessageCircle size={28} />
         </button>
